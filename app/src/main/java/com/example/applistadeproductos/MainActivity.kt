@@ -1,5 +1,6 @@
 package com.example.applistadeproductos
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,14 +15,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.applistadeproductos.ui.theme.AppListaDeProductosTheme
 
 class MainActivity : ComponentActivity() {
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -33,7 +43,7 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color.White
+
                 ) {
                     llamar()
                 }
@@ -42,48 +52,53 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-var lista2: MutableList<String> = mutableStateListOf()
-var lista: MutableList<String> = mutableStateListOf(
-    "Alejandrina Opazo ----> $206.598",
-    "Alicia Molina Godoy ------> $812.207",
-    "ARAYA CERDA MARIO ------> $172.122",
-    "BLANCA LOPEZ ORMAZABAL ------> $71.113",
-    "BOTILLERIA LA PROMO LIMITADA ------> $632.700",
-    "CRISTIAN REQUENES P. ------> $289.722",
-    "cristian super k ---> $178.806",
-    "EVER AÑASCO MONCAYO ------> $282.242",
-    "HOTELERA DIEGO DE ALMAGRO LTDA. ------> $1.585.676",
-    "HOTELERA PLAYA BRAVA S.A. ------> $3.866.865",
-    "HOTELERA Y TURISMO OCEANO S.A. ------> $261.825",
-    "INVERSIONES Y SERVICIOS INTEGRALES NORTE SPA ------> $62.288",
-    "JUAN FRANCISCO ANDRES CERDA LARRAIN ------> $388.202",
-    "Juan Meri Sandoval ------> $175.200",
-    "laura maya ---> $133.500",
-    "MADANA SPA ------> $458.457",
-    "MARGARITA CAMPOS GALAZ ------> $363.624",
-    "maria carreño ---> $94.254",
-    "maria contreras ---> $296.000",
-    "MARIA VELEZ PACHECO ------> $531.733",
-    "MIGUEL ANGEL RETAMALES PEÑA ------> $333.291",
-    "MILTON ALFARO CONTRERAS ------> $421.298",
-    "OTILIA PEREA RIOS ------> $951.609",
-    "RECREACIONES COMERCIAL BAJO MOLLE S.A. ------> $603.349",
-    "Reinaldo Guerra Medina ------> $1.016.167",
-    "RESTAURANT DOMINGO ANTONIO MEZA FLORES E.I.R.L. ------> $246.623",
-    "Rigoberto Cortes Tapia ------> $906.529",
-    "roberto fuentes ---> $105.540",
-    "ROJAS CLARO HECTOR WILFREDO ------> $83.302",
-    "ROSSANA DIAZ TORREALBA ------> $768.386",
-    "Royal Santiago Hotel S.A. ------> $2.899.066",
-    "S TRAGOS SPA ------> $120.073"
-)
-
+data class productos(val codigo : Int, val nombre : String, val precio : Int)
+var lista2: MutableList<productos> = mutableStateListOf()
+var lista: MutableList<productos> = mutableStateListOf()
 
 @Composable
-fun llamar() {
+fun api(){
+    lista.clear()
+    lista2.clear()
+    var cont = LocalContext.current
+    val queue = Volley.newRequestQueue(cont)
+    val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
+    println("entro")
+    // Request a string response from the provided URL.
+    //println("entrooooooooooooooooo--------->222222222")
+    val stringRequest = JsonObjectRequest(
+        Request.Method.GET, url,null,
+        Response.Listener{ response ->
+
+            val json = response.getJSONArray("productos")
+
+            for (p in 0 until json.length()){
+                //println(json.getJSONObject(p).get("precio"))
+
+                lista.add(productos( 1, json.getJSONObject(p).get("nombre").toString(), json.getJSONObject(p).get("precio").toString().toInt()))
+            }
+
+            // Display the first 500 characters of the response string.
+            //textView.text = "Response is: ${response.substring(0, 500)}"
+        },
+        Response.ErrorListener { })
+
+
+
+    // Add the request to the RequestQueue.
+    queue.add(stringRequest)
     lista.forEach {
         lista2.add(it)
     }
+}
+
+@Composable
+fun llamar() {
+    if(lista.isEmpty()){
+     api()
+    }
+    println(lista.isEmpty())
+    println(lista.size)
     Greeting()
 }
 
@@ -100,21 +115,21 @@ fun Greeting() {
             lista2.add(it)
         }*/
         var producto by remember { mutableStateOf("") }
-        var l: List<String>
+        var l: List<productos>
         TextField(
             value = producto, onValueChange = { valor ->
                 lista2.clear()
-                println(lista2.size)
+                //println(lista2.size)
                 producto = valor
-                println(valor)
-                println(lista.size)
-                l = lista.filter { (it.uppercase()).contains(valor.uppercase()) }
+                //println(valor)
+                //println(lista.size)
+                l = lista.filter { (it.nombre.uppercase()).contains(valor.uppercase()) }
                 l.forEach {
                     lista2.add(it)
-                    println(it)
+
                 }
-                println("el valor nuevo de lis2 es ${lista2.size}")
-                println("hola comop estan")
+                //println("el valor nuevo de lis2 es ${lista2.size}")
+                //println("hola comop estan")
             })
         Spacer(modifier = Modifier.height(20.dp))
         Button(
@@ -157,7 +172,7 @@ fun Greeting() {
                                 .fillMaxWidth(.75f)
                                 .height(50.dp)
                                 .horizontalScroll(rememberScrollState()),
-                            text = "${lista2[l]}"
+                            text = "${lista2[l].nombre}"
                         )
                     }
                     Card(
@@ -166,7 +181,7 @@ fun Greeting() {
                     ) {
                         Column() {
                             Text(
-                                text = "und $1.240",
+                                text = "${lista2[l].precio}",
                                 modifier = Modifier
                                     .padding(0.dp)
                                     .fillMaxWidth(1f)
