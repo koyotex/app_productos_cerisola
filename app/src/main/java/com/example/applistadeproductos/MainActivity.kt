@@ -27,84 +27,79 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.applistadeproductos.ui.theme.AppListaDeProductosTheme
+import java.text.DecimalFormat
 
 class MainActivity : ComponentActivity() {
 
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
-
-
         setContent {
+            var contexto = LocalContext.current
             AppListaDeProductosTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
 
-                ) {
-                    llamar()
+                    ) {
+                    GetDataApi(contexto)
+                    Greeting()
                 }
             }
         }
     }
 }
 
-data class productos(val codigo : Int, val nombre : String, val precio : Int)
+data class productos(val codigo: Int, val nombre: String, val precio: String)
+
 var lista2: MutableList<productos> = mutableStateListOf()
 var lista: MutableList<productos> = mutableStateListOf()
 
-@Composable
-fun api(){
+
+fun GetDataApi(contexto: Context) {
     lista.clear()
     lista2.clear()
-    var cont = LocalContext.current
-    val queue = Volley.newRequestQueue(cont)
+    val queue = Volley.newRequestQueue(contexto)
     val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
     println("entro")
-    // Request a string response from the provided URL.
-    //println("entrooooooooooooooooo--------->222222222")
     val stringRequest = JsonObjectRequest(
-        Request.Method.GET, url,null,
-        Response.Listener{ response ->
+        Request.Method.GET, url, null,
+        Response.Listener { response ->
 
             val json = response.getJSONArray("productos")
 
-            for (p in 0 until json.length()){
-                //println(json.getJSONObject(p).get("precio"))
+            for (p in 0 until json.length()) {
+                //println(json.getJSONObject(p).get("nombre"))
+                var nombre: String = json.getJSONObject(p).get("nombre").toString()
+                var precio: Double = json.getJSONObject(p).get("precio").toString().toDouble()
+                var formato = DecimalFormat("#,###.###")
+                var precio_format = formato.format(precio).toString()
+                lista.add(
 
-                lista.add(productos( 1, json.getJSONObject(p).get("nombre").toString(), json.getJSONObject(p).get("precio").toString().toInt()))
+                    productos(
+                        1,
+                        nombre,
+                        precio_format
+                    )
+                )
             }
-
-            // Display the first 500 characters of the response string.
-            //textView.text = "Response is: ${response.substring(0, 500)}"
+            lista.forEach {
+                lista2.add(it)
+            }
         },
         Response.ErrorListener { })
 
 
-
     // Add the request to the RequestQueue.
     queue.add(stringRequest)
-    lista.forEach {
-        lista2.add(it)
-    }
+
 }
 
-@Composable
-fun llamar() {
-    if(lista.isEmpty()){
-     api()
-    }
-    println(lista.isEmpty())
-    println(lista.size)
-    Greeting()
-}
 
 @Composable
 fun Greeting() {
 
+    var contexto = LocalContext.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -119,27 +114,19 @@ fun Greeting() {
         TextField(
             value = producto, onValueChange = { valor ->
                 lista2.clear()
-                //println(lista2.size)
                 producto = valor
-                //println(valor)
-                //println(lista.size)
                 l = lista.filter { (it.nombre.uppercase()).contains(valor.uppercase()) }
                 l.forEach {
                     lista2.add(it)
-
                 }
-                //println("el valor nuevo de lis2 es ${lista2.size}")
-                //println("hola comop estan")
             })
         Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = {
-                lista2.clear()
-                /*println("hola")
-                lista2.forEach {
-                    println(it)
-                }*/
-
+                var formato = DecimalFormat("#,###.###")
+                var numero = 1200.345
+                println(formato.format(numero).toString())
+                GetDataApi(contexto)
             },
             modifier = Modifier
                 .height(60.dp)
@@ -158,7 +145,7 @@ fun Greeting() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(1f)
-                        .background(Color.Cyan)
+
                 ) {
 
                     Card(
@@ -181,7 +168,7 @@ fun Greeting() {
                     ) {
                         Column() {
                             Text(
-                                text = "${lista2[l].precio}",
+                                text = "und $${lista2[l].precio}",
                                 modifier = Modifier
                                     .padding(0.dp)
                                     .fillMaxWidth(1f)
@@ -196,8 +183,7 @@ fun Greeting() {
                                 modifier = Modifier
                                     .padding(0.dp)
                                     .fillMaxWidth(1f)
-                                    .height(25.dp)
-                                    .background(Color.Magenta),
+                                    .height(25.dp),
                                 textAlign = TextAlign.Center,
                                 fontSize = 13.sp
                             )
@@ -211,10 +197,11 @@ fun Greeting() {
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     AppListaDeProductosTheme {
-        llamar()
+        Greeting()
     }
 }
