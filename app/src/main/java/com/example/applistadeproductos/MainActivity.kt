@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.room.Room
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
@@ -50,36 +51,36 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class productos(val codigo: Int, val nombre: String, val precio: String)
+data class productos(val codigo: String, val nombre: String, val dsp: Int, val precio: Int)
 
 var lista2: MutableList<productos> = mutableStateListOf()
 var lista: MutableList<productos> = mutableStateListOf()
 
 
 fun GetDataApi(contexto: Context) {
+    if (lista2.isEmpty()) {
+
+    }
     lista.clear()
     lista2.clear()
     val queue = Volley.newRequestQueue(contexto)
     val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
-    println("entro")
     val stringRequest = JsonObjectRequest(
         Request.Method.GET, url, null,
         Response.Listener { response ->
-
             val json = response.getJSONArray("productos")
-
             for (p in 0 until json.length()) {
-                //println(json.getJSONObject(p).get("nombre"))
-                var nombre: String = json.getJSONObject(p).get("nombre").toString()
-                var precio: Double = json.getJSONObject(p).get("precio").toString().toDouble()
-                var formato = DecimalFormat("#,###.###")
-                var precio_format = formato.format(precio).toString()
-                lista.add(
+                var codigo: String = json.getJSONObject(p).getString("codigo")
+                var nombre: String = json.getJSONObject(p).getString("nombre")
+                var dsp: Int = json.getJSONObject(p).getInt("dsp")
+                var precio: Int = json.getJSONObject(p).getInt("precio")
 
+                lista.add(
                     productos(
-                        1,
+                        codigo,
                         nombre,
-                        precio_format
+                        dsp,
+                        precio
                     )
                 )
             }
@@ -96,6 +97,16 @@ fun GetDataApi(contexto: Context) {
 }
 
 
+fun DB(contexto: Context) {
+    val db = Room.databaseBuilder(
+        contexto,
+        AppDatabase::class.java, "database-product"
+    ).build()
+
+    val productDao = db.productDao()
+    val productos: List<Producto> = productDao.getAll()
+}
+
 @Composable
 fun Greeting() {
 
@@ -111,7 +122,9 @@ fun Greeting() {
         }*/
         var producto by remember { mutableStateOf("") }
         var l: List<productos>
+        Spacer(modifier = Modifier.height(15.dp))
         TextField(
+
             value = producto, onValueChange = { valor ->
                 lista2.clear()
                 producto = valor
@@ -119,22 +132,36 @@ fun Greeting() {
                 l.forEach {
                     lista2.add(it)
                 }
-            })
+            },
+            modifier = Modifier.height(50.dp)
+        )
         Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = {
-                var formato = DecimalFormat("#,###.###")
-                var numero = 1200.345
-                println(formato.format(numero).toString())
                 GetDataApi(contexto)
             },
             modifier = Modifier
                 .height(60.dp)
                 .padding(2.dp)
         ) {
-            Text(text = "darle clic")
+            Text(text = "Actualizar Lista")
         }
         Spacer(modifier = Modifier.height(20.dp))
+        vista()
+    }
+}
+
+@Composable
+fun vista() {
+
+    if (lista2.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "Sin Conexion")
+        }
+    } else {
         LazyColumn(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth(1f)
@@ -150,43 +177,69 @@ fun Greeting() {
 
                     Card(
                         elevation = 10.dp,
-                        modifier = Modifier.padding(1.dp)
+                        modifier = Modifier
+                            .padding(1.dp)
+                            .height(80.dp)
 
                     ) {
-                        Text(
-                            modifier = Modifier
-                                .padding(1.dp)
-                                .fillMaxWidth(.75f)
-                                .height(50.dp)
-                                .horizontalScroll(rememberScrollState()),
-                            text = "${lista2[l].nombre}"
-                        )
+                        Column() {
+
+                            Column() {
+                                Text(
+                                    text = "codigo: ${lista2[l].codigo}",
+                                    fontSize = 8.sp,
+                                    modifier = Modifier.padding(start = 5.dp, top = 5.dp)
+                                )
+                                Text(
+                                    modifier = Modifier
+                                        .padding(1.dp)
+                                        .fillMaxWidth(1f)
+                                        .fillMaxHeight(.6f)
+                                        .padding(5.dp)
+                                        .horizontalScroll(rememberScrollState()),
+                                    text = "${lista2[l].nombre}",
+                                    fontSize = 18.sp
+                                )
+
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxHeight(1f)
+
+                            ) {
+                                var formato = DecimalFormat("#,###.###")
+                                var precio_und_format = formato.format(lista2[l].precio).toString()
+                                var precio_dsp_format =
+                                    formato.format(lista2[l].precio * lista2[l].dsp).toString()
+                                Text(
+                                    text = "und $$precio_und_format",
+                                    modifier = Modifier
+                                        .fillMaxWidth(.5f)
+                                        .fillMaxHeight(1f)
+                                        .padding(top = 2.dp),
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 15.sp
+
+                                )
+                                Spacer(modifier = Modifier.height(1.dp))
+                                Text(
+                                    text = "dsp $$precio_dsp_format",
+                                    modifier = Modifier
+                                        .fillMaxWidth(1f)
+                                        .fillMaxHeight(1f)
+                                        .padding(top = 2.dp),
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 15.sp
+                                )
+                            }
+                        }
                     }
                     Card(
                         elevation = 10.dp,
                         modifier = Modifier.padding(5.dp)
                     ) {
                         Column() {
-                            Text(
-                                text = "und $${lista2[l].precio}",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .fillMaxWidth(1f)
-                                    .height(25.dp),
-                                textAlign = TextAlign.Center,
-                                fontSize = 13.sp
 
-                            )
-                            Spacer(modifier = Modifier.height(1.dp))
-                            Text(
-                                text = "dsp $8.160",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .fillMaxWidth(1f)
-                                    .height(25.dp),
-                                textAlign = TextAlign.Center,
-                                fontSize = 13.sp
-                            )
                         }
 
                     }
@@ -195,8 +248,9 @@ fun Greeting() {
 
         }
     }
-}
 
+
+}
 
 @Preview(showBackground = true)
 @Composable
