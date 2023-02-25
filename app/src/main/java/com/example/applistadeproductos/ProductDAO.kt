@@ -13,10 +13,8 @@ interface ProductDAO {
     @Query("SELECT * FROM producto WHERE codigo IN (:codigo)")
     fun loadAllByIds(codigo: IntArray): List<Producto>
 
-    @Query(
-        "SELECT * FROM producto "
-    )
-    fun findByName(first: String, last: String): Producto
+  
+    //fun findByName(first: String, last: String): Producto
 
     @Insert
     fun insertAll(vararg productos: Producto)

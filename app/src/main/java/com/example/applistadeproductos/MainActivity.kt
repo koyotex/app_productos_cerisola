@@ -58,9 +58,7 @@ var lista: MutableList<productos> = mutableStateListOf()
 
 
 fun GetDataApi(contexto: Context) {
-    if (lista2.isEmpty()) {
 
-    }
     lista.clear()
     lista2.clear()
     val queue = Volley.newRequestQueue(contexto)
