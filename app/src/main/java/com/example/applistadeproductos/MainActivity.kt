@@ -2,6 +2,7 @@ package com.example.applistadeproductos
 
 import android.content.Context
 import android.os.Bundle
+import android.os.PowerManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ScrollState
@@ -43,7 +44,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
 
                     ) {
-                    GetDataApi(contexto)
+                    if (lista.isEmpty()) {
+                        GetDataApi(contexto)
+                    } else {
+
+                    }
                     Greeting()
                 }
             }
@@ -53,58 +58,82 @@ class MainActivity : ComponentActivity() {
 
 data class productos(val codigo: String, val nombre: String, val dsp: Int, val precio: Int)
 
-var lista2: MutableList<productos> = mutableStateListOf()
-var lista: MutableList<productos> = mutableStateListOf()
+var lista2: MutableList<Producto> = mutableStateListOf()
+var lista: MutableList<Producto> = mutableStateListOf(Producto("2", "david", 2, 1000))
 
 
 fun GetDataApi(contexto: Context) {
-    if (lista2.isEmpty()) {
 
-    }
-    lista.clear()
-    lista2.clear()
-    val queue = Volley.newRequestQueue(contexto)
-    val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
-    val stringRequest = JsonObjectRequest(
-        Request.Method.GET, url, null,
-        Response.Listener { response ->
-            val json = response.getJSONArray("productos")
-            for (p in 0 until json.length()) {
-                var codigo: String = json.getJSONObject(p).getString("codigo")
-                var nombre: String = json.getJSONObject(p).getString("nombre")
-                var dsp: Int = json.getJSONObject(p).getInt("dsp")
-                var precio: Int = json.getJSONObject(p).getInt("precio")
-
-                lista.add(
-                    productos(
-                        codigo,
-                        nombre,
-                        dsp,
-                        precio
-                    )
-                )
-            }
-            lista.forEach {
-                lista2.add(it)
-            }
-        },
-        Response.ErrorListener { })
-
-
-    // Add the request to the RequestQueue.
-    queue.add(stringRequest)
-
-}
-
-
-fun DB(contexto: Context) {
     val db = Room.databaseBuilder(
         contexto,
         AppDatabase::class.java, "database-product"
     ).build()
 
     val productDao = db.productDao()
-    val productos: List<Producto> = productDao.getAll()
+    /*lista.forEach {
+        productDao.insertAll(it)
+    }*/
+    productDao.insertAll(Producto("1", "david", 2, 2000))
+    println("este es el total ${productDao.getAll().size}")
+    //val productos: List<Producto> = productDao.getAll()
+
+
+    /*   if (productDao.getAll().isEmpty()) {
+           lista.clear()
+           lista2.clear()
+           val queue = Volley.newRequestQueue(contexto)
+           val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
+           val stringRequest = JsonObjectRequest(
+               Request.Method.GET, url, null,
+               Response.Listener { response ->
+                   val json = response.getJSONArray("productos")
+                   for (p in 0 until json.length()) {
+                       var codigo: String = json.getJSONObject(p).getString("codigo")
+                       var nombre: String = json.getJSONObject(p).getString("nombre")
+                       var dsp: Int = json.getJSONObject(p).getInt("dsp")
+                       var precio: Int = json.getJSONObject(p).getInt("precio")
+
+                       lista.add(
+                           Producto(
+                               codigo,
+                               nombre,
+                               dsp,
+                               precio
+                           )
+                       )
+                   }
+                   lista.forEach {
+                       lista2.add(it)
+                   }
+               },
+               Response.ErrorListener {
+
+               })
+
+
+           // Add the request to the RequestQueue.
+           queue.add(stringRequest)
+       } else {
+           println(productDao.getAll().size)
+           productDao.getAll().forEach {
+               lista.add(it)
+           }
+           lista.forEach {
+               lista2.add(it)
+           }
+       }*/
+
+
+}
+
+fun llamar_datos() {
+
+
+}
+
+fun DB(contexto: Context) {
+
+
 }
 
 @Composable
@@ -121,7 +150,7 @@ fun Greeting() {
             lista2.add(it)
         }*/
         var producto by remember { mutableStateOf("") }
-        var l: List<productos>
+        var l: List<Producto>
         Spacer(modifier = Modifier.height(15.dp))
         TextField(
 
@@ -152,6 +181,11 @@ fun Greeting() {
 }
 
 @Composable
+fun texto(mensaje: String) {
+    Text(text = mensaje)
+}
+
+@Composable
 fun vista() {
 
     if (lista2.isEmpty()) {
@@ -159,7 +193,7 @@ fun vista() {
             modifier = Modifier.fillMaxSize(1f),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "Sin Conexion")
+            texto("cargando...")
         }
     } else {
         LazyColumn(
