@@ -49,7 +49,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
 
                     ) {
-                    llamar_datos()
                     Greeting()
                 }
             }
@@ -59,11 +58,12 @@ class MainActivity : ComponentActivity() {
 
 data class productos(val codigo: String, val nombre: String, val dsp: Int, val precio: Int)
 
-var lista2: MutableList<Producto> = mutableStateListOf()
-var lista: MutableList<Producto> = mutableStateListOf()
 
-
-fun GetDataApi(contexto: Context) {
+fun GetDataApi(
+    contexto: Context,
+    lista: MutableList<Producto> = mutableStateListOf(),
+    lista2: MutableList<Producto> = mutableStateListOf()
+) {
 
 
     val db = Room.databaseBuilder(
@@ -77,10 +77,11 @@ fun GetDataApi(contexto: Context) {
 
 
     GlobalScope.launch(Dispatchers.IO) {
+        lista.clear()
+        lista2.clear()
         if (productDao.getAll().isEmpty()) {
             println("entro al api")
-            lista.clear()
-            lista2.clear()
+
             val queue = Volley.newRequestQueue(contexto)
             val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
             val stringRequest = JsonObjectRequest(
@@ -102,12 +103,13 @@ fun GetDataApi(contexto: Context) {
                             )
                         )
                     }
-                    lista.forEach {
-                        lista2.add(it)
-                    }
+
                     GlobalScope.launch(Dispatchers.IO) {
 
                         productDao.insertAll(lista)
+                        lista.forEach {
+                            lista2.add(it)
+                        }
 
                     }
 
@@ -159,9 +161,16 @@ fun l() {
 
 @Composable
 fun Greeting() {
+    var lista2: MutableList<Producto> =
+        mutableStateListOf()
+
+    var lista: MutableList<Producto> by remember {
+        mutableStateListOf()
+    }
 
 
     var contexto = LocalContext.current
+    GetDataApi(contexto, lista, lista2)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -199,7 +208,7 @@ fun Greeting() {
             Text(text = "Actualizar Lista")
         }
         Spacer(modifier = Modifier.height(20.dp))
-        vista()
+        vista(lista2)
     }
 }
 
@@ -209,7 +218,7 @@ fun texto(mensaje: String) {
 }
 
 @Composable
-fun vista() {
+fun vista(lista2: MutableList<Producto>) {
 
     if (lista2.isEmpty()) {
         Box(
