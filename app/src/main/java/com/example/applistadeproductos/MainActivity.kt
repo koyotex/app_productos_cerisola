@@ -29,6 +29,10 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.applistadeproductos.ui.theme.AppListaDeProductosTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 class MainActivity : ComponentActivity() {
@@ -44,11 +48,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
 
                     ) {
-                    if (lista.isEmpty()) {
-                        GetDataApi(contexto)
-                    } else {
 
-                    }
                     Greeting()
                 }
             }
@@ -59,69 +59,75 @@ class MainActivity : ComponentActivity() {
 data class productos(val codigo: String, val nombre: String, val dsp: Int, val precio: Int)
 
 var lista2: MutableList<Producto> = mutableStateListOf()
-var lista: MutableList<Producto> = mutableStateListOf(Producto("2", "david", 2, 1000))
+var lista: MutableList<Producto> = mutableStateListOf()
 
 
 fun GetDataApi(contexto: Context) {
 
-    val db = Room.databaseBuilder(
-        contexto,
-        AppDatabase::class.java, "database-product"
-    ).build()
+    GlobalScope.launch(Dispatchers.IO) {
 
-    val productDao = db.productDao()
-    /*lista.forEach {
-        productDao.insertAll(it)
-    }*/
-    productDao.insertAll(Producto("1", "david", 2, 2000))
-    println("este es el total ${productDao.getAll().size}")
+        val db = Room.databaseBuilder(
+            contexto,
+            AppDatabase::class.java, "database-product"
+        ).build()
+
+        val productDao = db.productDao()
+
+        //productDao.insertAll(Producto("32", "david", 2, 2000))
+        println("este es el total ${productDao.getAll().size}")
+
+        if (productDao.getAll().isEmpty()) {
+            println("entro al api")
+            lista.clear()
+            lista2.clear()
+            val queue = Volley.newRequestQueue(contexto)
+            val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
+            val stringRequest = JsonObjectRequest(
+                Request.Method.GET, url, null,
+                Response.Listener { response ->
+                    val json = response.getJSONArray("productos")
+                    for (p in 0 until json.length()) {
+                        var codigo: String = json.getJSONObject(p).getString("codigo")
+                        var nombre: String = json.getJSONObject(p).getString("nombre")
+                        var dsp: Int = json.getJSONObject(p).getInt("dsp")
+                        var precio: Int = json.getJSONObject(p).getInt("precio")
+
+                        lista.add(
+                            Producto(
+                                codigo,
+                                nombre,
+                                dsp,
+                                precio
+                            )
+                        )
+                    }
+                    lista.forEach {
+                        /*productDao.insertAll(it)*/
+                        lista2.add(it)
+                    }
+
+                },
+                Response.ErrorListener {
+
+                })
+
+
+            // Add the request to the RequestQueue.
+            queue.add(stringRequest)
+        } else {
+            println("entro a la base de datos ")
+            productDao.getAll().forEach {
+                lista.add(it)
+            }
+            lista.forEach {
+                lista2.add(it)
+            }
+        }
+
+
+    }
+
     //val productos: List<Producto> = productDao.getAll()
-
-
-    /*   if (productDao.getAll().isEmpty()) {
-           lista.clear()
-           lista2.clear()
-           val queue = Volley.newRequestQueue(contexto)
-           val url = "https://www.paginadeprueba009.com/prueba_kotlin.php"
-           val stringRequest = JsonObjectRequest(
-               Request.Method.GET, url, null,
-               Response.Listener { response ->
-                   val json = response.getJSONArray("productos")
-                   for (p in 0 until json.length()) {
-                       var codigo: String = json.getJSONObject(p).getString("codigo")
-                       var nombre: String = json.getJSONObject(p).getString("nombre")
-                       var dsp: Int = json.getJSONObject(p).getInt("dsp")
-                       var precio: Int = json.getJSONObject(p).getInt("precio")
-
-                       lista.add(
-                           Producto(
-                               codigo,
-                               nombre,
-                               dsp,
-                               precio
-                           )
-                       )
-                   }
-                   lista.forEach {
-                       lista2.add(it)
-                   }
-               },
-               Response.ErrorListener {
-
-               })
-
-
-           // Add the request to the RequestQueue.
-           queue.add(stringRequest)
-       } else {
-           println(productDao.getAll().size)
-           productDao.getAll().forEach {
-               lista.add(it)
-           }
-           lista.forEach {
-               lista2.add(it)
-           }
-       }*/
 
 
 }
@@ -131,8 +137,13 @@ fun llamar_datos() {
 
 }
 
+@Composable
 fun DB(contexto: Context) {
 
+
+}
+
+fun l() {
 
 }
 
