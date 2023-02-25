@@ -3,6 +3,7 @@ package com.example.applistadeproductos
 import android.content.Context
 import android.os.Bundle
 import android.os.PowerManager
+import android.provider.Settings.Global
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ScrollState
@@ -48,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
 
                     ) {
-
+                    llamar_datos()
                     Greeting()
                 }
             }
@@ -64,18 +65,18 @@ var lista: MutableList<Producto> = mutableStateListOf()
 
 fun GetDataApi(contexto: Context) {
 
+
+    val db = Room.databaseBuilder(
+        contexto,
+        AppDatabase::class.java, "database-product"
+    ).build()
+
+    val productDao = db.productDao()
+
+    //productDao.insertAll(Producto("32", "david", 2, 2000))
+
+
     GlobalScope.launch(Dispatchers.IO) {
-
-        val db = Room.databaseBuilder(
-            contexto,
-            AppDatabase::class.java, "database-product"
-        ).build()
-
-        val productDao = db.productDao()
-
-        //productDao.insertAll(Producto("32", "david", 2, 2000))
-        println("este es el total ${productDao.getAll().size}")
-
         if (productDao.getAll().isEmpty()) {
             println("entro al api")
             lista.clear()
@@ -102,8 +103,12 @@ fun GetDataApi(contexto: Context) {
                         )
                     }
                     lista.forEach {
-                        /*productDao.insertAll(it)*/
                         lista2.add(it)
+                    }
+                    GlobalScope.launch(Dispatchers.IO) {
+
+                        productDao.insertAll(lista)
+
                     }
 
                 },
@@ -115,6 +120,7 @@ fun GetDataApi(contexto: Context) {
             // Add the request to the RequestQueue.
             queue.add(stringRequest)
         } else {
+            lista2.clear()
             println("entro a la base de datos ")
             productDao.getAll().forEach {
                 lista.add(it)
@@ -133,7 +139,11 @@ fun GetDataApi(contexto: Context) {
 }
 
 fun llamar_datos() {
+    GlobalScope.launch(Dispatchers.IO) {
+        var lista3: MutableList<String> = mutableStateListOf("")
 
+        lista3.clear()
+    }
 
 }
 
@@ -150,7 +160,9 @@ fun l() {
 @Composable
 fun Greeting() {
 
+
     var contexto = LocalContext.current
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -178,7 +190,7 @@ fun Greeting() {
         Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = {
-                GetDataApi(contexto)
+                //GetDataApi(contexto)
             },
             modifier = Modifier
                 .height(60.dp)

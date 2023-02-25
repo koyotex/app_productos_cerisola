@@ -15,7 +15,7 @@ interface ProductDAO {
 
 
     @Insert
-    fun insertAll(vararg productos: Producto)
+    fun insertAll(productos: MutableList<Producto>)
 
     @Delete
     fun delete(producto: Producto)
