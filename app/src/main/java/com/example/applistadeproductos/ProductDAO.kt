@@ -10,6 +10,9 @@ interface ProductDAO {
     @Query("SELECT * FROM producto")
     fun getAll(): List<Producto>
 
+    @Query("DELETE FROM producto")
+    fun deleteAll()
+
     @Query("SELECT * FROM producto WHERE codigo IN (:codigo)")
     fun loadAllByIds(codigo: IntArray): List<Producto>
 
