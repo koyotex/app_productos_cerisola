@@ -102,6 +102,7 @@ fun GetData(contexto: Context) {
 
 fun GetDataApi(contexto: Context) {
 
+
     println("entro a actualizar la lista")
 
     val db = Room.databaseBuilder(
@@ -117,6 +118,8 @@ fun GetDataApi(contexto: Context) {
     val stringRequest = JsonObjectRequest(
         Request.Method.GET, url, null,
         Response.Listener { response ->
+            lista.clear()
+            lista2.clear()
             val json = response.getJSONArray("productos")
             for (p in 0 until json.length()) {
                 var codigo: String = json.getJSONObject(p).getString("codigo")
@@ -136,9 +139,19 @@ fun GetDataApi(contexto: Context) {
 
             //println(productDao.getAll().size)
             GlobalScope.launch(Dispatchers.IO) {
-                productDao.insertAll(lista)
-                lista.forEach {
-                    lista2.add(it)
+
+                if (!productDao.getAll().isEmpty()) {
+                    lista.forEach {
+                        productDao.UpdateProduct(it)
+                        lista2.add(it)
+                    }
+
+                } else {
+                    productDao.insertAll(lista)
+                    lista.forEach {
+                        lista2.add(it)
+                    }
+
                 }
 
             }
@@ -203,8 +216,13 @@ fun Greeting() {
         Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = {
-                borraDB(contexto)
+//                borraDB(contexto)
                 GetDataApi(contexto)
+//                var p1 = Producto("1", "david", 2, 3)
+//                var p2 = Producto("1", "david", 2, 3)
+//
+//                println("ESTE ES EL RESULTADO: ${p1.equals(p2)}")
+
             },
             modifier = Modifier
                 .height(60.dp)

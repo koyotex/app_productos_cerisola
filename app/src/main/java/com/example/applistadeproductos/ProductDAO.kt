@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface ProductDAO {
@@ -16,6 +17,9 @@ interface ProductDAO {
     @Query("SELECT * FROM producto WHERE codigo IN (:codigo)")
     fun loadAllByIds(codigo: IntArray): List<Producto>
 
+
+    @Update
+    fun UpdateProduct(producto: Producto)
 
     @Insert
     fun insertAll(productos: MutableList<Producto>)
